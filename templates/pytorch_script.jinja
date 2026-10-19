@@ -1,0 +1,57 @@
+import torch
+import torch.nn as nn
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+
+def main():
+    # 1. Veri Ön İşleme (Transform) Ayarları
+    transform = transforms.Compose([
+        {% if transform.resize %}
+        transforms.Resize({{ transform.resize }}),
+        {% endif %}
+        {% if transform.grayscale %}
+        transforms.Grayscale(num_output_channels=1),
+        {% endif %}
+        transforms.ToTensor(),
+    ])
+
+    # 2. Veri Seti ve Yükleyici (DataLoader)
+    dataset_path = r"{{ dataset.folder_path }}"
+    
+    try:
+        dataset = datasets.ImageFolder(root=dataset_path, transform=transform)
+        dataloader = DataLoader(
+            dataset, 
+            batch_size={{ dataset.batch_size }}, 
+            shuffle={{ dataset.shuffle }}
+        )
+        print(f"Veri seti başariyla yüklendi: {len(dataset)} görsel, {len(dataset.classes)} sınıf bulundu.")
+    except FileNotFoundError:
+        print("Hata: Belirtilen veri seti klasörü bulunamadı!")
+        return
+
+    # 3. Model Tanımı (Mock Node Verilerine Göre)
+    class CustomVisionModel(nn.Module):
+        def __init__(self):
+            super(CustomVisionModel, self).__init__()
+            self.{{ layer.layer_id }} = nn.{{ layer.layer_type }}(
+                in_channels={{ layer.params.in_channels }},
+                out_channels={{ layer.params.out_channels }},
+                kernel_size={{ layer.params.kernel_size }}
+            )
+
+        def forward(self, x):
+            x = self.{{ layer.layer_id }}(x)
+            {% if layer.params.activation != "None" %}
+            # Aktivasyon Katmanı: {{ layer.params.activation }}
+            # (Buraya ileride aktivasyon fonksiyonu kodları eklenecek)
+            {% endif %}
+            return x
+
+    # Modeli Başlat
+    model = CustomVisionModel()
+    print("Model Mimarisi:")
+    print(model)
+
+if __name__ == "__main__":
+    main()

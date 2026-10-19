@@ -28,5 +28,14 @@ class RightPanel(QWidget):
 
         self.properties_group.setLayout(self.form_layout)
         
+        #layout.addWidget(self.properties_group)
+        self.properties_group.setLayout(self.form_layout)
         layout.addWidget(self.properties_group)
-        layout.addStretch() # Elemanları yukarı yaslamak için alt kısmı iter
+        
+        layout.addStretch() # Bu satır zaten vardı
+        
+        # YENİ EKLENEN KISIM: Kodu Üret Butonu
+        from PyQt6.QtWidgets import QPushButton
+        self.btn_generate = QPushButton("Kodu Üret (Generate PyTorch Script)")
+        self.btn_generate.setStyleSheet("background-color: #2b78e4; color: white; font-weight: bold; padding: 10px;")
+        layout.addWidget(self.btn_generate)
