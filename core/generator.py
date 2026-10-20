@@ -6,15 +6,15 @@ class CodeGenerator:
         # Şablonların bulunduğu klasörü Jinja'ya tanıtıyoruz
         self.env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
 
-    def generate_script(self, dataset_config, layer_config):
+    def generate_script(self, dataset_config, layers, train_config):
         # Şablonu yükle
         template = self.env.get_template("pytorch_script.jinja")
         
         # Değişkenleri şablona yerleştir (Render)
         raw_code = template.render(
             dataset=dataset_config,
-            transform=dataset_config.transform,
-            layer=layer_config
+            train=train_config,
+            layer=layers
         )
         
         # Black kütüphanesi ile kodu pırıl pırıl formatla

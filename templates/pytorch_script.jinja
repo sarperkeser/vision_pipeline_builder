@@ -1,57 +1,59 @@
 import torch
 import torch.nn as nn
+import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
 def main():
-    # 1. Veri Ön İşleme (Transform) Ayarları
+    # Dynamic Input Size Configuration
+    input_width = {{ dataset.input_size[0] }}
+    input_height = {{ dataset.input_size[1] }}
+    num_classes = {{ dataset.num_classes }}
+
     transform = transforms.Compose([
-        {% if transform.resize %}
-        transforms.Resize({{ transform.resize }}),
-        {% endif %}
-        {% if transform.grayscale %}
-        transforms.Grayscale(num_output_channels=1),
-        {% endif %}
+        transforms.Resize((input_width, input_height)),
         transforms.ToTensor(),
     ])
 
-    # 2. Veri Seti ve Yükleyici (DataLoader)
-    dataset_path = r"{{ dataset.folder_path }}"
+    dataset = datasets.ImageFolder(root=r"{{ dataset.folder_path }}", transform=transform)
+    dataloader = DataLoader(dataset, batch_size={{ dataset.batch_size }}, shuffle={{ dataset.shuffle }})
     
-    try:
-        dataset = datasets.ImageFolder(root=dataset_path, transform=transform)
-        dataloader = DataLoader(
-            dataset, 
-            batch_size={{ dataset.batch_size }}, 
-            shuffle={{ dataset.shuffle }}
-        )
-        print(f"Veri seti başariyla yüklendi: {len(dataset)} görsel, {len(dataset.classes)} sınıf bulundu.")
-    except FileNotFoundError:
-        print("Hata: Belirtilen veri seti klasörü bulunamadı!")
-        return
+    print(f"Veri Seti Yüklendi | Görsel Boyutu: {input_width}x{input_height} | Sınıf Sayısı: {num_classes} | Toplam Görsel: {len(dataset)}")
 
-    # 3. Model Tanımı (Mock Node Verilerine Göre)
+    # Dinamik CNN Model Mimarisi
     class CustomVisionModel(nn.Module):
         def __init__(self):
-            super(CustomVisionModel, self).__init__()
-            self.{{ layer.layer_id }} = nn.{{ layer.layer_type }}(
-                in_channels={{ layer.params.in_channels }},
-                out_channels={{ layer.params.out_channels }},
-                kernel_size={{ layer.params.kernel_size }}
+            super().__init__()
+            self.features = nn.Sequential(
+                {% for layer in layers %}
+                {% if layer.layer_type == "Conv2d" %}
+                nn.Conv2d(in_channels={{ layer.in_channels }}, out_channels={{ layer.out_channels }}, kernel_size={{ layer.kernel_size }}),
+                {% elif layer.layer_type == "Linear" %}
+                nn.Linear(in_features={{ layer.in_channels }}, out_features={{ layer.out_channels }}),
+                {% elif layer.layer_type == "MaxPool2d" %}
+                nn.MaxPool2d(kernel_size=2, stride=2),
+                {% endif %}
+                
+                {% if layer.activation != "None" %}
+                nn.{{ layer.activation }}(),
+                {% endif %}
+                
+                {% endfor %}
             )
 
         def forward(self, x):
-            x = self.{{ layer.layer_id }}(x)
-            {% if layer.params.activation != "None" %}
-            # Aktivasyon Katmanı: {{ layer.params.activation }}
-            # (Buraya ileride aktivasyon fonksiyonu kodları eklenecek)
-            {% endif %}
-            return x
+            return self.features(x)
 
-    # Modeli Başlat
     model = CustomVisionModel()
-    print("Model Mimarisi:")
+    print("\nModel Mimarisi:")
     print(model)
+    
+    # Eğitim Konfigürasyonu
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.{{ train.optimizer }}(model.parameters(), lr={{ train.learning_rate }})
+    epochs = {{ train.epochs }}
+
+    print(f"\n{epochs} Epoch boyunca {train.optimizer} (LR: {{ train.learning_rate }}) ile eğitim başlatılmaya hazır.")
 
 if __name__ == "__main__":
     main()
