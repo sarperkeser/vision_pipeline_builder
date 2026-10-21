@@ -4,6 +4,18 @@ from typing import Optional, Tuple, List
 class TransformConfig(BaseModel):
     grayscale: bool = False
     normalize: bool = False
+    
+    h_flip: bool = False
+    v_flip: bool = False
+    rotation: int = 0
+    
+    color_jitter: bool = False
+    jitter_brightness: float = 0.2
+    jitter_contrast: float = 0.2
+    jitter_saturation: float = 0.2
+    
+    gaussian_blur: bool = False
+    blur_kernel: int = 3 # PyTorch'ta kernel size genelde 3, 5, 7 gibi tek sayılar olur
 
 class DatasetConfig(BaseModel):
     folder_path: str = ""

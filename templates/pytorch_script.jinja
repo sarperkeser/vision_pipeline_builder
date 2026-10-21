@@ -5,13 +5,22 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
 def main():
-    # Dynamic Input Size Configuration
+# Dynamic Input Size and Augmentation Configuration
     input_width = {{ dataset.input_size[0] }}
     input_height = {{ dataset.input_size[1] }}
     num_classes = {{ dataset.num_classes }}
 
     transform = transforms.Compose([
         transforms.Resize((input_width, input_height)),
+        {% if dataset.transform.h_flip %}transforms.RandomHorizontalFlip(p=0.5),{% endif %}
+        {% if dataset.transform.v_flip %}transforms.RandomVerticalFlip(p=0.5),{% endif %}
+        {% if dataset.transform.rotation > 0 %}transforms.RandomRotation({{ dataset.transform.rotation }}),{% endif %}
+        {% if dataset.transform.color_jitter %}
+        transforms.ColorJitter(brightness={{ dataset.transform.jitter_brightness }}, contrast={{ dataset.transform.jitter_contrast }}, saturation={{ dataset.transform.jitter_saturation }}),
+        {% endif %}
+        {% if dataset.transform.gaussian_blur %}
+        transforms.GaussianBlur(kernel_size={{ dataset.transform.blur_kernel }}),
+        {% endif %}
         transforms.ToTensor(),
     ])
 
